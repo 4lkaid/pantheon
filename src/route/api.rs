@@ -1,6 +1,6 @@
 use crate::{
     handler,
-    middleware::{cors, trace},
+    middleware::{cors, request_id, trace},
     AppState,
 };
 use axum::{
@@ -8,12 +8,21 @@ use axum::{
     Router,
 };
 use std::sync::Arc;
+use tower::ServiceBuilder;
 
 pub fn init(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/", get(handler::demo::root))
         .route("/users", post(handler::demo::create_user))
-        .layer(cors::cors())
-        .layer(trace::trace())
+        // Its recommended to use tower::ServiceBuilder to apply multiple middleware at once, instead of calling layer (or route_layer) repeatedly.
+        // ServiceBuilder works by composing all layers into one such that they run top to bottom.
+        // Executing middleware top to bottom is generally easier to understand and follow mentally which is one of the reasons ServiceBuilder is recommended.
+        .layer(
+            ServiceBuilder::new()
+                .layer(request_id::set_request_id())
+                .layer(request_id::propagate_request_id())
+                .layer(trace::trace())
+                .layer(cors::cors()),
+        )
         .with_state(state)
 }
