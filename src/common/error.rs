@@ -1,5 +1,5 @@
 use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse, Json};
-use serde_json::json;
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -49,6 +49,10 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        #[derive(Serialize)]
+        struct ErrorResponse {
+            message: String,
+        }
         let (status, message) = match self {
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, self.to_string()),
             Self::Forbidden => (StatusCode::FORBIDDEN, self.to_string()),
@@ -69,10 +73,6 @@ impl IntoResponse for Error {
             }
         };
 
-        let payload = json!({
-            "message": message,
-        });
-
-        (status, Json(payload)).into_response()
+        (status, Json(ErrorResponse { message })).into_response()
     }
 }
