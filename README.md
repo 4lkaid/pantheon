@@ -14,8 +14,13 @@ Pantheon is a web application template designed to provide a robust foundation f
     ```bash
     # Ensure that `sqlx-cli` is installed. You can install it using the following command:
     cargo install sqlx-cli
+
     # Ensure the database connection information is properly configured in the `.env` file.
     DATABASE_URL=postgres://username:password@host/database
+
+    # Create the database at DATABASE_URL:
+    sqlx database create
+
     # Execute the data migration command to set up the database tables:
     sqlx migrate run
     ```
