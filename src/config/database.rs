@@ -39,7 +39,7 @@ pub async fn init(config: &Config) -> Result<()> {
     Ok(())
 }
 
-pub fn get() -> &'static PgPool {
+pub fn conn() -> &'static PgPool {
     DB.get()
         .unwrap_or_else(|| panic!("database is not initialized"))
 }

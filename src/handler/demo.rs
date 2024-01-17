@@ -1,5 +1,5 @@
 use crate::{
-    common::{error::Error, validation::ValidatedJson},
+    common::validation::ValidatedJson,
     config::{database, redis},
     AppResult,
 };
@@ -21,15 +21,9 @@ pub struct User {
 }
 
 pub async fn root() -> AppResult<String> {
-    let mut con = redis::get()
-        .get_tokio_connection()
-        .await
-        .map_err(|err| Error::Redis(err))?;
-    let _: () = con
-        .set_ex("greeting", "Hello, Pantheon!", 10)
-        .await
-        .map_err(|err| Error::Redis(err))?;
-    let result: String = con.get("greeting").await.map_err(|err| Error::Redis(err))?;
+    let mut con = redis::conn().await?;
+    let _: () = con.set_ex("greeting", "Hello, Pantheon!", 10).await?;
+    let result: String = con.get("greetings").await?;
     Ok(result)
 }
 
@@ -41,8 +35,7 @@ pub async fn create_user(
         r#"insert into users (username) values ($1) returning id, username"#,
         payload.username
     )
-    .fetch_one(database::get())
-    .await
-    .map_err(|err| Error::Sqlx(err))?;
+    .fetch_one(database::conn())
+    .await?;
     Ok(Json(user))
 }

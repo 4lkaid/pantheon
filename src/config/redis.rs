@@ -1,3 +1,4 @@
+use crate::common::error::Error;
 use anyhow::Result;
 use config::Config;
 use std::sync::OnceLock;
@@ -12,8 +13,11 @@ pub async fn init(config: &Config) -> Result<()> {
     Ok(())
 }
 
-pub fn get() -> &'static redis::Client {
-    REDIS
+pub async fn conn() -> Result<redis::aio::Connection> {
+    Ok(REDIS
         .get()
         .unwrap_or_else(|| panic!("redis client not initialized"))
+        .get_tokio_connection()
+        .await
+        .map_err(|err| Error::Redis(err))?)
 }
