@@ -23,7 +23,7 @@ pub struct User {
 pub async fn root() -> AppResult<String> {
     let mut con = redis::conn().await?;
     let _: () = con.set_ex("greeting", "Hello, Pantheon!", 10).await?;
-    let result: String = con.get("greetings").await?;
+    let result: String = con.get("greeting").await?;
     Ok(result)
 }
 
