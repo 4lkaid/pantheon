@@ -5,20 +5,12 @@ pub mod middleware;
 pub mod route;
 
 use anyhow::{Context, Result};
-use redis::Client;
-use sqlx::PgPool;
-use std::sync::Arc;
 use tracing_appender::non_blocking::WorkerGuard;
-
-pub struct AppState {
-    pub db: PgPool,
-    pub redis: Client,
-}
 
 pub type AppResult<T> = Result<T, common::error::Error>;
 
-async fn serve(config: config::Config, state: Arc<AppState>) -> Result<()> {
-    let router = route::api::init(state);
+async fn serve(config: config::Config) -> Result<()> {
+    let router = route::api::init();
     let listener = tokio::net::TcpListener::bind(
         config
             .get_string("general.listen")
@@ -32,18 +24,14 @@ async fn serve(config: config::Config, state: Arc<AppState>) -> Result<()> {
 
 pub async fn run() -> Result<WorkerGuard> {
     let config = config::init().with_context(|| "configuration parsing failed")?;
-    let pg_pool = config::database::init(&config)
+    config::database::init(&config)
         .await
         .with_context(|| "database connection failed")?;
-    let redis_client = config::redis::init(&config)
+    config::redis::init(&config)
         .await
         .with_context(|| "redis connection failed")?;
     let worker_guard = config::logger::init(&config);
-    let state = Arc::new(AppState {
-        db: pg_pool,
-        redis: redis_client,
-    });
-    serve(config, state)
+    serve(config)
         .await
         .with_context(|| "service startup failed")?;
     Ok(worker_guard)

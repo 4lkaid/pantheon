@@ -1,16 +1,14 @@
 use crate::{
     handler,
     middleware::{cors, request_id, trace},
-    AppState,
 };
 use axum::{
     routing::{get, post},
     Router,
 };
-use std::sync::Arc;
 use tower::ServiceBuilder;
 
-pub fn init(state: Arc<AppState>) -> Router {
+pub fn init() -> Router {
     Router::new()
         .route("/", get(handler::demo::root))
         .route("/users", post(handler::demo::create_user))
@@ -24,5 +22,4 @@ pub fn init(state: Arc<AppState>) -> Router {
                 .layer(trace::trace())
                 .layer(cors::cors()),
         )
-        .with_state(state)
 }

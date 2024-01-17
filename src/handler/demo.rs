@@ -1,11 +1,11 @@
 use crate::{
     common::{error::Error, validation::ValidatedJson},
-    AppResult, AppState,
+    config::{database, redis},
+    AppResult,
 };
-use axum::{extract::State, Json};
-use redis::AsyncCommands;
+use ::redis::AsyncCommands;
+use axum::extract::Json;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use validator::Validate;
 
 #[derive(Deserialize, Validate)]
@@ -20,9 +20,8 @@ pub struct User {
     pub username: String,
 }
 
-pub async fn root(State(state): State<Arc<AppState>>) -> AppResult<String> {
-    let mut con = state
-        .redis
+pub async fn root() -> AppResult<String> {
+    let mut con = redis::get()
         .get_tokio_connection()
         .await
         .map_err(|err| Error::Redis(err))?;
@@ -35,7 +34,6 @@ pub async fn root(State(state): State<Arc<AppState>>) -> AppResult<String> {
 }
 
 pub async fn create_user(
-    State(state): State<Arc<AppState>>,
     ValidatedJson(payload): ValidatedJson<CreateUser>,
 ) -> AppResult<Json<User>> {
     let user = sqlx::query_as!(
@@ -43,7 +41,7 @@ pub async fn create_user(
         r#"insert into users (username) values ($1) returning id, username"#,
         payload.username
     )
-    .fetch_one(&state.db)
+    .fetch_one(database::get())
     .await
     .map_err(|err| Error::Sqlx(err))?;
     Ok(Json(user))

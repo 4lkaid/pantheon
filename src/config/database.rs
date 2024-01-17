@@ -1,9 +1,11 @@
 use anyhow::Result;
 use config::Config;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::time::Duration;
+use std::{sync::OnceLock, time::Duration};
 
-pub async fn init(config: &Config) -> Result<PgPool> {
+static DB: OnceLock<PgPool> = OnceLock::new();
+
+pub async fn init(config: &Config) -> Result<()> {
     let url = config.get_string("database.url")?;
     let max_connections = config
         .get_int("database.max_connections")
@@ -33,5 +35,11 @@ pub async fn init(config: &Config) -> Result<PgPool> {
         .max_lifetime(Some(Duration::from_secs(max_lifetime)))
         .connect(&url)
         .await?;
-    Ok(pool)
+    let _ = DB.set(pool);
+    Ok(())
+}
+
+pub fn get() -> &'static PgPool {
+    DB.get()
+        .unwrap_or_else(|| panic!("database is not initialized"))
 }
