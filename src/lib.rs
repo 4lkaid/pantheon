@@ -5,6 +5,7 @@ pub mod middleware;
 pub mod route;
 
 use anyhow::{Context, Result};
+use std::net::SocketAddr;
 use tracing_appender::non_blocking::WorkerGuard;
 
 pub type AppResult<T> = Result<T, common::error::Error>;
@@ -18,7 +19,11 @@ async fn serve(config: config::Config) -> Result<()> {
     )
     .await?;
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, router).await?;
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
 
