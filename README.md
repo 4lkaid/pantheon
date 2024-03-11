@@ -27,6 +27,10 @@ Pantheon is a web application template designed to provide a robust foundation f
 4. Run the application with `cargo run`.
 5. Access the application through specified endpoints and utilize the provided API functionalities.
 
+## Minimum supported Rust version
+
+pantheon's MSRV is 1.70.
+
 ## License
 
 Licensed under the [MIT License](LICENSE).
