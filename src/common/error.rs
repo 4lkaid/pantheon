@@ -45,6 +45,10 @@ pub enum Error {
     #[allow(dead_code)]
     #[error(transparent)]
     Anyhow(#[from] anyhow::Error),
+
+    #[allow(dead_code)]
+    #[error("{1}")]
+    Custom(StatusCode, String),
 }
 
 impl IntoResponse for Error {
@@ -71,6 +75,7 @@ impl IntoResponse for Error {
                     "Internal Server Error".to_string(),
                 )
             }
+            Self::Custom(statue, _) => (statue, self.to_string()),
         };
 
         (status, Json(ErrorResponse { message })).into_response()
