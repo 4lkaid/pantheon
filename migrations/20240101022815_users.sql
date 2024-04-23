@@ -1,6 +1,5 @@
 -- Add migration script here
-CREATE TABLE IF NOT EXISTS users
-(
-    id       BIGSERIAL PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL
+CREATE TABLE IF NOT EXISTS users (
+    id bigserial PRIMARY KEY,
+    username text UNIQUE NOT NULL
 );
