@@ -1,6 +1,6 @@
 use anyhow::Result;
 use config::Config;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 use std::{sync::OnceLock, time::Duration};
 
 static DB: OnceLock<PgPool> = OnceLock::new();
@@ -28,6 +28,12 @@ pub async fn init(config: &Config) -> Result<()> {
         .unwrap_or(30 * 60)
         .try_into()?;
     let pool = PgPoolOptions::new()
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                conn.execute("SET TIME ZONE 'Asia/Shanghai';").await?;
+                Ok(())
+            })
+        })
         .max_connections(max_connections)
         .min_connections(min_connections)
         .acquire_timeout(Duration::from_secs(acquire_timeout))
